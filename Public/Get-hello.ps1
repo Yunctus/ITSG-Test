@@ -1,7 +1,7 @@
 function Get-Hello {
     [CmdletBinding()]
     param(
-        [string]$Name = "Marcin"
+        [string]$Name = "Janek"
     )
 
     "Hello $Name"
