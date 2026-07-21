@@ -1,0 +1,98 @@
+name: Deploy Module to Self-Runner
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Public/**'
+      - 'MyModule.psd1'
+      - 'MyModule.psm1'
+      - '.github/workflows/deploy-module.yml'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Display workflow info
+        shell: powershell
+        run: |
+          Write-Host "========================================"
+          Write-Host "Module Deployment Workflow"
+          Write-Host "========================================"
+          Write-Host "Repository: ${{ github.repository }}"
+          Write-Host "Branch: ${{ github.ref_name }}"
+          Write-Host "Commit: ${{ github.sha }}"
+          Write-Host "Trigger: ${{ github.event_name }}"
+          Write-Host ""
+      
+      - name: Deploy module
+        shell: powershell
+        run: |
+          Push-Location ${{ github.workspace }}
+          Write-Host "Starting deployment from: $(Get-Location)"
+          & .\deploy-module.ps1 -Force
+          Pop-Location
+      
+      - name: Verify deployment
+        shell: powershell
+        run: |
+          $modulePath = "X:\PowerShell Scripts\MyModule"
+          Write-Host "Verifying module at: $modulePath"
+          
+          if (Test-Path $modulePath) {
+            Write-Host "Module directory found"
+            $files = Get-ChildItem -Path $modulePath -Recurse -File
+            Write-Host "Total files: $($files.Count)"
+            Write-Host ""
+            Write-Host "Module contents:"
+            Get-ChildItem -Path $modulePath -Recurse -File | ForEach-Object {
+              Write-Host "  - $($_.FullName.Substring($modulePath.Length))"
+            }
+          } else {
+            Write-Error "Module directory not found at $modulePath"
+            exit 1
+          }
+      
+      - name: Test module import
+        shell: powershell
+        run: |
+          $modulePath = "X:\PowerShell Scripts\MyModule"
+          
+          Write-Host "Testing module import..."
+          try {
+            Import-Module $modulePath -Force
+            Write-Host "Module imported successfully"
+            
+            $module = Get-Module MyModule
+            if ($module) {
+              Write-Host "Exported Functions:"
+              $module.ExportedFunctions.Keys | ForEach-Object {
+                Write-Host "  - $_"
+              }
+            }
+          } catch {
+            Write-Error "Failed to import module: $_"
+            exit 1
+          }
+      
+      - name: Deployment summary
+        if: success()
+        shell: powershell
+        run: |
+          Write-Host ""
+          Write-Host "Deployment Successful"
+          Write-Host ""
+          Write-Host "Summary:"
+          Write-Host "  Repository: ${{ github.repository }}"
+          Write-Host "  Branch: ${{ github.ref_name }}"
+          Write-Host "  Commit: ${{ github.sha }}"
+          Write-Host "  Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          Write-Host "  Destination: X:\PowerShell Scripts\MyModule"
+          Write-Host ""
