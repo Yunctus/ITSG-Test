@@ -36,7 +36,7 @@ if ($IncrementVersion) {
     
     $manifestContent = Get-Content $ManifestPath -Raw
     $manifestContent = $manifestContent -replace "ModuleVersion\s*=\s*'[^']*'", "ModuleVersion = '$newVersion'"
-    Set-Content $ManifestPath -Value $manifestContent -Force
+    Set-Content $ManifestPath -Value $manifestContent -Force -Encoding UTF8
     $currentVersion = $newVersion
 }
 
