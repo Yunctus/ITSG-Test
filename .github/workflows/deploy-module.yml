@@ -37,7 +37,7 @@ jobs:
         run: |
           Push-Location ${{ github.workspace }}
           Write-Host "Starting deployment from: $(Get-Location)"
-          & .\deploy-module.ps1 -Force
+          & .\deploy-module.ps1 -Force -IncrementVersion
           Pop-Location
       
       - name: Verify deployment
